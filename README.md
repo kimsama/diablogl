@@ -22,6 +22,9 @@ Open data formats will be utilized to allow moddability and customization.
  * `localhost:8000`
 
 ## Development
+
+UPDATE: Please, see [Wiki page](https://github.com/kimsama/diablogl/wiki) first. 
+
 1. Clone.
  * `git clone git://github.com/doggan/diablogl.git`
 1. Install.
