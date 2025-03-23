@@ -17,10 +17,13 @@ var bundleLogger = require('../util/bundleLogger');
 var gulp = require('gulp');
 var handleErrors = require('../util/handleErrors');
 var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
 var config = require('../config').browserify;
 var babel = require('babelify');
 var assign = require('lodash.assign');
 var omit = require('lodash.omit');
+var fs = require('fs');
+var path = require('path');
 
 var browserifyTask = function(callback, devMode) {
 
@@ -46,20 +49,36 @@ var browserifyTask = function(callback, devMode) {
             // Log when bundling starts
             bundleLogger.start(bundleConfig.outputName);
 
-            return b
-                .bundle()
-                // Report compile errors
-                .on('error', handleErrors)
-                // Use vinyl-source-stream to make the
-                // stream gulp compatible. Specify the
-                // desired output filename here.
-                .pipe(source(bundleConfig.outputName))
-                // Specify the output destination
-                .pipe(gulp.dest(bundleConfig.dest))
-                .on('end', reportFinished)
-                .pipe(browserSync.reload({
-                    stream: true
-                }));
+            // Make sure the destination directory exists
+            var destDir = path.dirname(path.join(bundleConfig.dest, bundleConfig.outputName));
+            if (!fs.existsSync(destDir)) {
+                fs.mkdirSync(destDir, { recursive: true });
+            }
+
+            // Directly write to file as a fallback approach
+            var writeToFile = function(err, src) {
+                if (err) {
+                    handleErrors(err);
+                    return;
+                }
+                
+                // Write the file directly
+                var outputPath = path.join(bundleConfig.dest, bundleConfig.outputName);
+                fs.writeFileSync(outputPath, src);
+                
+                // Log completion
+                reportFinished();
+                
+                // Notify browserSync
+                if (browserSync.active) {
+                    browserSync.reload();
+                }
+            };
+
+            // Bundle and write to file
+            b.bundle(function(err, src) {
+                writeToFile(err, src);
+            });
         };
 
         if (devMode) {

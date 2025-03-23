@@ -1,14 +1,13 @@
 var gulp = require('gulp');
-var gutil = require('gulp-util');
 var jshint = require('gulp-jshint');
 var config = require('../config');
 var reporter = require('jshint-stylish');
 var map = require('map-stream');
 
-var errorReporter = function(file, cb) {
+var errorReporter = function() {
     return map(function(file, cb) {
         if (!file.jshint.success) {
-            gutil.beep();
+            console.log('\x07'); // ASCII bell character for beep
         }
         cb(null, file);
     });
